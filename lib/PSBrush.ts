@@ -176,6 +176,10 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
     ) {
       return false;
     }
+    if (this.drawStraightLine && this._points.length > 1) {
+      this._hasStraightLine = true;
+      this._points.pop();
+    }
     this._points.push(point);
     return true;
   },
@@ -372,6 +376,10 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
     var ctx = this.canvas.contextTop;
     ctx.closePath();
 
+    if (this.decimate) {
+      this._points = this.decimatePoints(this._points, this.decimate);
+    }
+    
     // debug statement:
     // console.log("raw path data:", this._points, simplify);
 
