@@ -1,5 +1,5 @@
 {
-  "name": "@arch-inc/fabricjs-psbrush",
+  "name": "fabricjs-psbrush",
   "version": "0.0.20",
   "description": "A lightweight pressure-sensitive brush implementation for Fabric.js",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arch-inc/fabricjs-psbrush.git"
+    "url": "git+https://github.com/cgwire/fabricjs-psbrush.git"
   },
   "keywords": [
     "canvas",
@@ -39,11 +39,11 @@
   "author": "Jun Kato <i@junkato.jp>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/arch-inc/fabricjs-psbrush/issues"
+    "url": "https://github.com/cgwire/fabricjs-psbrush/issues"
   },
-  "homepage": "https://github.com/arch-inc/fabricjs-psbrush#readme",
+  "homepage": "https://github.com/cgwire/fabricjs-psbrush#readme",
   "dependencies": {
-    "fabric": "^4.6.0"
+    "fabric": "^5.0.0"
   },
   "devDependencies": {
     "@types/fabric": "^4.5.3",
