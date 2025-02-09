@@ -1,8 +1,9 @@
 /// <reference types="fabric" />
-const fabricjs: typeof fabric =
-  typeof fabric === "undefined" ? require("fabric").fabric : fabric;
-
+import { fabric } from 'fabric'
 import PSPoint from "./PSPoint";
+
+const util = fabric.util as any
+
 
 export interface PSStrokeIface extends fabric.Object {
   type: "PSStroke";
@@ -11,54 +12,49 @@ export interface PSStrokeIface extends fabric.Object {
   strokePoints: PSPoint[];
 }
 
-const min = fabricjs.util.array.min as (
-    arr: any[],
-    byProperty?: string
-  ) => number,
-  max = fabricjs.util.array.max as (arr: any[], byProperty?: string) => number,
-  extend = fabricjs.util.object.extend;
+const extend = util.object.extend;
 
-const PSStrokeImpl = <any>fabricjs.util.createClass(
-  fabricjs.Object,
-  /** @lends PSStroke.prototype */ {
+class PSStrokeImpl extends fabric.Object {
+
+  /** @lends PSStroke.prototype */
     /**
      * Type of an object
      * @type String
      * @default
      */
-    type: "PSStroke",
+    type: "PSStroke";
 
     /**
      * Array of stroke points
      * @type Array
      * @default
      */
-    strokePoints: null,
+    strokePoints: null;
 
     /**
      * Time when this stroke started to be drawn
      * @type number
      */
-    startTime: null,
+    startTime: null;
 
     /**
      * Time when this stroke finished to be drawn
      * @type number
      */
-    endTime: null,
+    endTime: null;
 
-    cacheProperties: fabricjs.Object.prototype.cacheProperties.concat(
+    cacheProperties: fabric.Object.prototype.cacheProperties.concat(
       "strokePoints",
       "startTime",
       "endTime",
       "fillRule"
-    ),
+    );
 
-    stateProperties: fabricjs.Object.prototype.stateProperties.concat(
+    stateProperties: fabric.Object.prototype.stateProperties.concat(
       "strokePoints",
       "startTime",
       "endTime"
-    ),
+    );
 
     /**
      * Constructor
@@ -74,7 +70,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
       this.endTime = options.endTime;
       this.strokePoints = (strokePoints || []).concat();
       this._setPositionDimensions(options);
-    },
+    }
 
     /**
      * @private
@@ -97,7 +93,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
         x: calcDim.left + this.width / 2,
         y: calcDim.top + this.height / 2
       };
-    },
+    }
 
     /**
      * @private
@@ -174,7 +170,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
       }
 
       // ctx.restore();
-    },
+    }
 
     /**
      * @private
@@ -183,7 +179,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
     _render: function(ctx: CanvasRenderingContext2D): void {
       this._renderStroke(ctx);
       this._renderPaintInOrder(ctx);
-    },
+    }
 
     /**
      * Returns string representation of an instance
@@ -199,7 +195,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
         this.left +
         " }>"
       );
-    },
+    }
 
     /**
      * Returns object representation of an instance
@@ -215,7 +211,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
         left: this.left
       });
       return o;
-    },
+    }
 
     /* _TO_SVG_START_ */
     /**
@@ -338,7 +334,7 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
         x: number,
         y: number
       ) {
-        this.bounds = fabricjs.util.getBoundsOfCurve(
+        this.bounds = util.getBoundsOfCurve(
           this.x,
           this.y,
           ctlX,
@@ -358,10 +354,10 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
         width: Number;
         height: Number;
       } {
-        var minX = min(this.aX) || 0,
-          minY = min(this.aY) || 0,
-          maxX = max(this.aX) || 0,
-          maxY = max(this.aY) || 0,
+        var minX = Math.min(...this.aX) || 0,
+          minY = Math.min(...this.aY) || 0,
+          maxX = Math.max(...this.aX) || 0,
+          maxY = Math.max(...this.aY) || 0,
           deltaX = maxX - minX,
           deltaY = maxY - minY;
 
@@ -412,12 +408,12 @@ const PSStrokeImpl = <any>fabricjs.util.createClass(
       return ctx.calcBounds();
     }
   }
-);
+};
 
 /**
  * Pressure-sensitive stroke class
  * @class PSStroke
- * @extends fabricjs.Object
+ * @extends fabric.Object
  */
 const PSStroke: {
   new (path: PSPoint[], options: any): PSStrokeIface;
@@ -432,9 +428,9 @@ const PSStroke: {
  * @param {Function} [callback] Callback to invoke when an Stroke instance is created
  */
 PSStroke.fromObject = function(object: any, callback: Function): void {
-  // code from https://github.com/fabricjs/fabricjs.js/blob/f3317569ffbe9e34477bd7579213fac8376bdc12/src/shapes/object.class.js#L1925-L1941
-  // cloning object inside fabricjs.Object._fromObject loses method of PSPoint, it causes errors at initializing PSStroke.
-  (<any>fabricjs.util).enlivenPatterns([object.fill, object.stroke], function(
+  // code from https://github.com/fabric/fabric.js/blob/f3317569ffbe9e34477bd7579213fac8376bdc12/src/shapes/object.class.js#L1925-L1941
+  // cloning object inside fabric.Object._fromObject loses method of PSPoint, it causes errors at initializing PSStroke.
+  (<any>util).enlivenPatterns([object.fill, object.stroke], function(
     patterns: any
   ) {
     if (typeof patterns[0] !== "undefined") {
@@ -443,11 +439,11 @@ PSStroke.fromObject = function(object: any, callback: Function): void {
     if (typeof patterns[1] !== "undefined") {
       object.stroke = patterns[1];
     }
-    fabricjs.util.enlivenObjects(
+    util.enlivenObjects(
       [object.clipPath],
       function(enlivedProps: any) {
         object.clipPath = enlivedProps[0];
-        fabricjs.util.enlivenObjects(
+        util.enlivenObjects(
           object["strokePoints"],
           function(enlivendStrokePoints: PSPoint[]) {
             var instance = new PSStroke(enlivendStrokePoints, object);
@@ -463,5 +459,5 @@ PSStroke.fromObject = function(object: any, callback: Function): void {
   });
 };
 
-(fabricjs as any).PSStroke = PSStroke;
+(fabric as any).PSStroke = PSStroke;
 export default PSStroke;

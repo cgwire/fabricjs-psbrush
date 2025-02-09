@@ -2,11 +2,10 @@
 /*!
  * Copyright (c) 2020-2022 Arch Inc. (Jun Kato, Kenta Hara)
  *
- * fabricjs-psbrush, a lightweight pressure-sensitive brush implementation for Fabric.js
+ * fabric-psbrush, a lightweight pressure-sensitive brush implementation for Fabric.js
  * @license MIT
  */
-const fabricjs: typeof fabric =
-  typeof fabric === "undefined" ? require("fabric").fabric : fabric;
+import { fabric } from 'fabric'
 
 import PSSimplify from "./PSSimplify";
 import { FabricEvent, FabricPointer, FabricPointerEvent } from "./utils";
@@ -28,7 +27,7 @@ export interface PSBrushIface extends fabric.BaseBrush {
   onMouseUp(ev?: FabricEvent): void;
 }
 
-const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
+const PSBrushImpl = <any>fabric.util.lang_class.createClass(fabric.BaseBrush, {
   simplify: null,
   pressureManager: null,
   pressureCoeff: 100,
@@ -41,7 +40,7 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
 
   /**
    * Constructor
-   * @param {fabricjs.Canvas} canvas
+   * @param {fabric.Canvas} canvas
    * @return {PSBrush} Instance of a pencil brush
    */
   initialize: function(canvas) {
@@ -167,7 +166,7 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
 
   /**
    * @private
-   * @param {fabricjs.Point} point Point to be added to points array
+   * @param {fabric.Point} point Point to be added to points array
    */
   _addPoint: function(point) {
     if (
@@ -192,7 +191,7 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
     const ctx = this.canvas.contextTop;
     this._points.length = 0;
     this._setBrushStyles(ctx);
-    var color = new fabricjs.Color(this.color);
+    var color = new fabric.Color(this.color);
     this.needsFullRender = color.getAlpha() < 1;
     this._setShadow();
   },
@@ -347,7 +346,7 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
       strokeDashArray: this.strokeDashArray
     });
 
-    var position = new fabricjs.Point(
+    var position = new fabric.Point(
       path.left + path.width / 2,
       path.top + path.height / 2
     );
@@ -422,12 +421,12 @@ const PSBrushImpl = <any>fabricjs.util.createClass(fabricjs.BaseBrush, {
 
 /**
  * PSBrush class
- * @class fabricjs.PSBrush
- * @extends fabricjs.BaseBrush
+ * @class fabric.PSBrush
+ * @extends fabric.BaseBrush
  */
 const PSBrush: {
   new (canvas: fabric.StaticCanvas): PSBrushIface;
 } = PSBrushImpl;
 
-(fabricjs as any).PSBrush = PSBrush;
+(fabric as any).PSBrush = PSBrush;
 export default PSBrush;

@@ -2,24 +2,19 @@
   "name": "fabricjs-psbrush",
   "version": "0.0.20",
   "description": "A lightweight pressure-sensitive brush implementation for Fabric.js",
+  "type": "module",
   "main": "dist/index.js",
   "browser": "dist/index.js",
-  "module": "dist/index.es.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./lib/index.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "run-s build:lib next",
-    "build:docs": "run-s next typedoc",
-    "build:lib": "cross-env NODE_ENV=production rollup -c",
+    "build": "cross-env NODE_ENV=production rollup -c",
     "clean": "run-p clean:*",
-    "clean:docs": "del-cli docs/.next docs/out",
     "clean:lib": "del-cli dist docs/public/lib.js",
-    "dev": "run-p next:dev watch",
-    "next": "run-s next:build next:export",
-    "next:build": "next build ./docs",
-    "next:dev": "next ./docs",
-    "next:export": "next export ./docs",
-    "next:start": "next start ./docs",
     "prettify": "prettier --write ./**/*.{ts,tsx}",
     "typedoc": "typedoc --excludeInternal --excludeExternals --excludePrivate --excludeProtected --out ./docs/out/api ./lib/index.ts",
     "watch": "rollup -cw"
@@ -42,25 +37,24 @@
     "url": "https://github.com/cgwire/fabricjs-psbrush/issues"
   },
   "homepage": "https://github.com/cgwire/fabricjs-psbrush#readme",
-  "dependencies": {
-    "fabric": "^5.0.0"
+  "peerDependencies": {
+    "fabric": "cgwire/fabric.js"
   },
   "devDependencies": {
-    "@types/fabric": "^4.5.3",
-    "@types/react": "^17.0.30",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/fabric": "^5.3.9",
+    "@types/node": "^22.13.0",
     "cross-env": "^7.0.3",
-    "del-cli": "^3.0.1",
-    "next": "^12.0.7",
+    "del-cli": "^6.0.0",
     "npm-run-all": "^4.1.5",
-    "prettier": "^1.19.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "rollup": "^2.58.0",
-    "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.30.0",
-    "sharp": "^0.27.1",
-    "typedoc": "^0.22.5",
-    "typescript": "^4.4.4"
+    "prettier": "^3.4.2",
+    "rollup": "^4.34.0",
+    "tslib": "^2.8.1",
+    "typedoc": "^0.27.6",
+    "typescript": "^5.7.3"
   }
 }

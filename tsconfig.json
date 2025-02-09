@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "declaration": true,
-    "allowUmdGlobalAccess": true
+    "types": ["node"],
+    "allowUmdGlobalAccess": true,
+    "paths": {
+      "tslib" : ["./node_modules/tslib/tslib.d.ts"]
+    }
   },
   "include": ["./lib/**/*.ts"]
 }

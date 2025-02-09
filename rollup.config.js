@@ -1,53 +1,34 @@
-import typescript from "rollup-plugin-typescript2";
-import { terser } from "rollup-plugin-terser";
-import copy from "rollup-plugin-copy";
-import pkg from "./package.json";
+import resolve from "@rollup/plugin-node-resolve"
+import typescript from '@rollup/plugin-typescript'
+import commonjs from "@rollup/plugin-commonjs"
+import terser from '@rollup/plugin-terser'
+
+import packageJson from './package.json' with { type: 'json' }
 
 const comments = function(_node, comment) {
-  const { value, type } = comment;
-  return type === "comment2" && /@preserve|@license/i.test(value);
-};
+  const { value, type } = comment
+  return type === 'comment2' && /@preserve|@license/i.test(value)
+}
 
 export default [
   {
-    input: "lib/index.ts",
+    input: 'lib/index.ts',
     output: [
       {
-        file: pkg.main,
-        format: "umd",
-        name: "psbrush",
-        globals: {
-          fabric: "fabric"
-        }
-      },
-      {
-        file: pkg.module,
-        format: "es",
-        globals: {
-          fabric: "fabric"
-        }
+        file: packageJson.module,
+        name: 'psbrush',
+        format: 'esm',
       }
     ],
     external: [
-      ...Object.keys(pkg.dependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {})
+      ...Object.keys(packageJson.dependencies || {}),
+      ...Object.keys(packageJson.peerDependencies || {})
     ],
     plugins: [
+      resolve(),
       typescript({
-        typescript: require("typescript"),
-        tsconfig: "tsconfig.json"
-      }),
-      terser({
-        output: {
-          comments
-        }
-      }),
-      copy({
-        targets: [
-          { src: "dist/index.js", dest: "docs/public", rename: "lib.js" }
-        ],
-        hook: "writeBundle"
+        tsconfig: 'tsconfig.json'
       })
     ]
   }
-];
+]

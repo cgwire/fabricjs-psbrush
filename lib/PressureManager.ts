@@ -1,5 +1,4 @@
-const fabricjs: typeof fabric =
-  typeof fabric === "undefined" ? require("fabric").fabric : fabric;
+import { fabric } from 'fabric'
 
 import { PSBrushIface } from "./PSBrush";
 import PSPoint from "./PSPoint";
@@ -59,5 +58,5 @@ class PressureManager implements PressureManagerIface {
   }
 }
 
-(fabricjs as any).PressureManager = PressureManager;
+(fabric as any).PressureManager = PressureManager;
 export default PressureManager;
