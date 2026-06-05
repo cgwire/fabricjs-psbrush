@@ -1,31 +1,25 @@
-import { fabric } from 'fabric';
+import { classRegistry, Point, FabricObject, util, BaseBrush, Color, Shadow } from 'fabric';
 
-class PSPoint extends fabric.Point {
+class PSPoint extends Point {
+  static type = 'PSPoint'
   constructor(x, y, pressure) {
     super(x, y);
-    this.type = "PSPoint";
+    this.type = 'PSPoint';
     this.pressure = pressure;
   }
   midPointFrom(p) {
     const mid = super.midPointFrom(p);
-    return new PSPoint(mid.x, mid.y, (this.pressure + p.pressure) / 2);
+    return new PSPoint(mid.x, mid.y, (this.pressure + p.pressure) / 2)
   }
   clone() {
-    return new PSPoint(this.x, this.y, this.pressure);
+    return new PSPoint(this.x, this.y, this.pressure)
+  }
+  static fromObject(object) {
+    return Promise.resolve(new PSPoint(object.x, object.y, object.pressure))
   }
 }
 
-PSPoint["fromObject"] = function (object, callback) {
-  callback && callback(new PSPoint(object.x, object.y, object.pressure));
-};
-
-fabric["PSPoint"] = PSPoint;
-
-if (fabric.util && fabric.util.registerClass) {
-  fabric.util.registerClass(PSPoint, "PSPoint");
-} else if (fabric.ClassRegistry) {
-  fabric.ClassRegistry.register(PSPoint, "PSPoint");
-}
+classRegistry.setClass(PSPoint, 'PSPoint');
 
 function isPSStroke(object) {
   return object && object["type"] === "PSStroke";
@@ -46,33 +40,6 @@ function getPressure(ev, fallbackValue = 0.5) {
     return fallbackValue;
   }
   return ev.pressure;
-}
-
-function createFabricClass(Parent, methods) {
-  function Class() {
-    const instance = Object.create(Parent.prototype);
-    Object.assign(instance, methods);
-    instance.callSuper = function (methodName, ...args) {
-      const parentMethod = Parent.prototype[methodName];
-      if (typeof parentMethod === "function") {
-        return parentMethod.apply(this, args);
-      }
-    };
-    if (instance.initialize) {
-      instance.initialize.apply(instance, arguments);
-    }
-    return instance;
-  }
-  Class.prototype = Object.create(Parent.prototype);
-  Object.assign(Class.prototype, methods);
-  Class.prototype.constructor = Class;
-  Class.prototype.callSuper = function (methodName, ...args) {
-    const parentMethod = Parent.prototype[methodName];
-    if (typeof parentMethod === "function") {
-      return parentMethod.apply(this, args);
-    }
-  };
-  return Class;
 }
 
 class PressureManager {
@@ -121,8 +88,6 @@ class PressureManager {
 
   onMouseUp() {}
 }
-
-fabric["PressureManager"] = PressureManager;
 
 class Simplify {
   set tolerance(tolerance) {
@@ -296,36 +261,26 @@ class PSSimplify extends Simplify {
   }
 }
 
-const util = fabric.util;
-const extend = util.object.extend;
+class PSStroke extends FabricObject {
+  static type = "PSStroke";
 
-const createClass$1 =
-  fabric.util.createClass ||
-  (fabric.util.lang_class && fabric.util.lang_class.createClass) ||
-  createFabricClass;
+  get type() {
+    return "PSStroke";
+  }
 
-const PSStrokeImpl = createClass$1(fabric.Object, {
-  type: "PSStroke",
-  strokePoints: null,
-  startTime: null,
-  endTime: null,
+  // Suppress the FabricObject v6 setter warning — type is fixed by the getter above
+  set type(_) {}
 
-  cacheProperties: fabric.Object.prototype.cacheProperties.concat(
+  static cacheProperties = [
+    ...FabricObject.cacheProperties,
     "strokePoints",
     "startTime",
     "endTime",
     "fillRule",
-  ),
+  ];
 
-  stateProperties: fabric.Object.prototype.stateProperties.concat(
-    "strokePoints",
-    "startTime",
-    "endTime",
-  ),
-
-  initialize: function (strokePoints, options) {
-    options = options || {};
-    this.callSuper("initialize", options);
+  constructor(strokePoints, options = {}) {
+    super(options);
 
     this.startTime = options.startTime;
     this.endTime = options.endTime;
@@ -339,9 +294,9 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
     }
 
     this._setPositionDimensions(options);
-  },
+  }
 
-  _setPositionDimensions: function (options) {
+  _setPositionDimensions(options) {
     var calcDim = this._parseDimensions();
     this.width = calcDim.width;
     this.height = calcDim.height;
@@ -357,9 +312,9 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
       x: calcDim.left + this.width / 2,
       y: calcDim.top + this.height / 2,
     };
-  },
+  }
 
-  _renderStroke: function (ctx) {
+  _renderStroke(ctx) {
     let i;
     let strokeWidth = this.strokeWidth / 1000;
     let p1 = this.strokePoints[0];
@@ -431,14 +386,14 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
 
       ctx.stroke();
     }
-  },
+  }
 
-  _render: function (ctx) {
+  _render(ctx) {
     this._renderStroke(ctx);
     this._renderPaintInOrder(ctx);
-  },
+  }
 
-  toString: function () {
+  toString() {
     return (
       "#<Stroke (" +
       this.complexity() +
@@ -448,20 +403,22 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
       this.left +
       " }>"
     );
-  },
+  }
 
-  toObject: function (propertiesToInclude) {
-    var o = extend(this.callSuper("toObject", propertiesToInclude), {
-      strokePoints: this.strokePoints.map((i) => i.clone()),
+  toObject(propertiesToInclude) {
+    return {
+      ...super.toObject(propertiesToInclude),
+      strokePoints: this.strokePoints.map((i) =>
+        typeof i.clone === "function" ? i.clone() : { ...i },
+      ),
       startTime: this.startTime,
       endTime: this.endTime,
       top: this.top,
       left: this.left,
-    });
-    return o;
-  },
+    };
+  }
 
-  _toSVG: function () {
+  _toSVG() {
     const svgString = [
       '<g transform="translate(',
       String(-this.strokeOffset.x),
@@ -500,28 +457,28 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
     }
     svgString.push("</g>\n");
     return svgString;
-  },
+  }
 
-  toClipPathSVG: function (reviver) {
+  toClipPathSVG(reviver) {
     return (
       "\t" +
       this._createBaseClipPathSVGMarkup(this._toSVG(), {
         reviver: reviver,
       })
     );
-  },
+  }
 
-  toSVG: function (reviver) {
+  toSVG(reviver) {
     return this._createBaseSVGMarkup(this._toSVG(), {
       reviver: reviver,
     });
-  },
+  }
 
-  complexity: function () {
+  complexity() {
     return this.strokePoints.length;
-  },
+  }
 
-  _parseDimensions: function () {
+  _parseDimensions() {
     function DummyCtx() {
       this.bounds = [];
       this.aX = [];
@@ -600,151 +557,60 @@ const PSStrokeImpl = createClass$1(fabric.Object, {
     }
 
     return ctx.calcBounds();
-  },
-});
-
-const PSStroke = PSStrokeImpl;
-
-PSStroke.fromObject = function (object, callback) {
-  if (!callback) {
-    console.warn("PSStroke.fromObject: callback is required");
-    return;
   }
 
-  function enlivenStrokePoints(strokePoints, cb) {
-    if (!strokePoints || strokePoints.length === 0) {
-      cb([]);
-      return;
+  static async fromObject(object) {
+    const strokePoints = await Promise.all(
+      (object.strokePoints || [])
+        .filter((p) => p != null)
+        .map((p) =>
+          p && p.type === "PSPoint"
+            ? PSPoint.fromObject(p)
+            : Promise.resolve(p),
+        ),
+    );
+
+    let clipPath = object.clipPath;
+    if (clipPath && typeof clipPath === "object") {
+      const enlivened = await util.enlivenObjects([clipPath]);
+      clipPath = enlivened && enlivened[0] ? enlivened[0] : null;
     }
 
-    const filteredPoints = strokePoints.filter((p) => p != null);
-
-    if (filteredPoints.length === 0) {
-      cb([]);
-      return;
-    }
-
-    const results = [];
-    let processed = 0;
-    const total = filteredPoints.length;
-
-    filteredPoints.forEach((obj, index) => {
-      if (!obj) {
-        results[index] = obj;
-        processed++;
-        if (processed === total) {
-          return cb(results);
-        }
-      } else if (obj.type === "PSPoint" && PSPoint.fromObject) {
-        PSPoint.fromObject(obj, (point) => {
-          results[index] = point;
-          processed++;
-          if (processed === total) {
-            return cb(results);
-          }
-        });
-      } else {
-        results[index] = obj;
-        processed++;
-        if (processed === total) {
-          return cb(results);
-        }
-      }
-    });
+    const instance = new PSStroke(strokePoints, { ...object, clipPath });
+    return instance;
   }
+}
 
-  function processPatterns(cb) {
-    const originalStroke = object.stroke;
-    const originalFill = object.fill;
+classRegistry.setClass(PSStroke, "PSStroke");
 
-    if (util.enlivenPatterns) {
-      util.enlivenPatterns([object.fill, object.stroke], function (patterns) {
-        if (patterns) {
-          object.fill = patterns[0] !== undefined ? patterns[0] : originalFill;
-          object.stroke =
-            patterns[1] !== undefined ? patterns[1] : originalStroke;
-        } else {
-          object.fill = originalFill;
-          object.stroke = originalStroke;
-        }
-        cb();
-      });
-    } else {
-      cb();
-    }
-  }
+class PSBrush extends BaseBrush {
+  simplify = null;
+  pressureManager = null;
+  pressureCoeff = 100;
+  simplifyTolerance = 0;
+  simplifyHighestQuality = false;
+  pressureIgnoranceOnStart = -1;
+  opacity = 1;
+  disableTouch = false;
+  currentStartTime = null;
+  disablePressure = false;
 
-  function processClipPath(cb) {
-    if (!object.clipPath) {
-      cb(null);
-      return;
-    }
-
-    if (util.enlivenObjects) {
-      util.enlivenObjects(
-        [object.clipPath],
-        function (enlived) {
-          cb(enlived && enlived.length > 0 ? enlived[0] : null);
-        },
-        null,
-        null,
-      );
-    } else {
-      cb(object.clipPath);
-    }
-  }
-
-  processPatterns(function () {
-    processClipPath(function (clipPath) {
-      object.clipPath = clipPath;
-      enlivenStrokePoints(
-        object["strokePoints"] || [],
-        function (strokePoints) {
-          const instance = new PSStroke(strokePoints, object);
-          if (!instance.stroke && object.stroke) {
-            instance.stroke = object.stroke;
-          }
-          callback(instance);
-        },
-      );
-    });
-  });
-};
-
-fabric["PSStroke"] = PSStroke;
-
-const createClass =
-  fabric.util.createClass ||
-  (fabric.util.lang_class && fabric.util.lang_class.createClass) ||
-  createFabricClass;
-
-const PSBrushImpl = createClass(fabric.BaseBrush, {
-  simplify: null,
-  pressureManager: null,
-  pressureCoeff: 100,
-  simplifyTolerance: 0,
-  simplifyHighestQuality: false,
-  pressureIgnoranceOnStart: -1,
-  opacity: 1,
-  disableTouch: false,
-  currentStartTime: null,
-  disablePressure: false,
-
-  initialize: function (canvas) {
+  constructor(canvas) {
+    super(canvas);
     this.simplify = new PSSimplify();
     this.pressureManager = new PressureManager(this);
     this.canvas = canvas;
     this._points = [];
-  },
+  }
 
-  _drawSegment: function (ctx, p1, p2) {
+  _drawSegment(ctx, p1, p2) {
     var midPoint = p1.midPointFrom(p2);
     ctx.lineWidth = p1.pressure * this.width;
     ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
     return midPoint;
-  },
+  }
 
-  onMouseDown: function (pointer, ev) {
+  onMouseDown(pointer, ev) {
     const p = ev ? ev.pointer : pointer;
     const e = ev ? ev.e : pointer["e"] || null;
     if (this.disableTouch && e && (e.touches || e.pointerType === "touch")) {
@@ -756,9 +622,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     this._prepareForDrawing(p, e);
     this._captureDrawingPath(p, e);
     this._render();
-  },
+  }
 
-  onMouseMove: function (pointer, ev) {
+  onMouseMove(pointer, ev) {
     const p = ev ? ev.pointer : pointer;
     const e = ev ? ev.e : pointer["e"] || null;
     if (this.disableTouch && e && (e.touches || e.pointerType === "touch")) {
@@ -768,7 +634,7 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     this.drawStraightLine = e && e.shiftKey === true;
     this.disablePressure = e && (e.ctrlKey === true || e.metaKey === true);
     if (this._captureDrawingPath(p, e) && this._points.length > 1) {
-      if (this.needsFullRender || this.drawStraightLine) {
+      if (this._needsFullRender || this.drawStraightLine) {
         this.canvas.clearContext(this.canvas.contextTop);
         this._render();
       } else {
@@ -791,9 +657,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
         ctx.restore();
       }
     }
-  },
+  }
 
-  onMouseUp: function (ev) {
+  onMouseUp(ev) {
     const e = ev && ev.e ? ev.e : null;
     if (this.disableTouch && e && (e.touches || e.pointerType === "touch")) {
       return;
@@ -802,9 +668,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     this.oldEnd = undefined;
     this._finalizeAndAddPath();
     this.pressureManager.onMouseUp();
-  },
+  }
 
-  _prepareForDrawing: function (pointer, ev) {
+  _prepareForDrawing(pointer, ev) {
     let pressure = this.pressureManager.onMouseDown(ev);
     if (this.disablePressure) {
       pressure = 1.0;
@@ -816,9 +682,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     this.canvas.contextTop.moveTo(p.x, p.y);
 
     this.currentStartTime = Date.now();
-  },
+  }
 
-  _addPoint: function (point) {
+  _addPoint(point) {
     if (
       this._points.length > 1 &&
       point.eq(this._points[this._points.length - 1])
@@ -831,27 +697,27 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     }
     this._points.push(point);
     return true;
-  },
+  }
 
-  _reset: function () {
+  _reset() {
     const ctx = this.canvas.contextTop;
     this._points.length = 0;
     this._setBrushStyles(ctx);
-    var color = new fabric.Color(this.color);
-    this.needsFullRender = color.getAlpha() < 1;
+    var color = new Color(this.color);
+    this._needsFullRender = color.getAlpha() < 1;
     this._setShadow();
-  },
+  }
 
-  _captureDrawingPath: function (pointer, ev) {
+  _captureDrawingPath(pointer, ev) {
     let pressure = this.pressureManager.onMouseMove(ev, this._points);
     if (this.disablePressure) {
       pressure = 1.0;
     }
     const pointerPoint = new PSPoint(pointer.x, pointer.y, pressure);
     return this._addPoint(pointerPoint);
-  },
+  }
 
-  _redrawSegments: function (points) {
+  _redrawSegments(points) {
     const ctx = this.canvas.contextTop;
     this._saveAndTransform(ctx);
     if (this.oldEnd) {
@@ -866,9 +732,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     });
     ctx.stroke();
     ctx.restore();
-  },
+  }
 
-  _render: function () {
+  _render() {
     var ctx = this.canvas.contextTop;
     var i;
     var len;
@@ -923,9 +789,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     ctx.restore();
     ctx.globalCompositeOperation = compositeOperation;
     ctx.globalAlpha = alpha;
-  },
+  }
 
-  convertPointsToSVGPath: function (points) {
+  convertPointsToSVGPath(points) {
     var path = [];
     var i;
     var width = this.width / 1000;
@@ -967,9 +833,9 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     }
     path.push("L ", p1.x + multSignX * width, " ", p1.y + multSignY * width);
     return path;
-  },
+  }
 
-  createPSStroke: function (points) {
+  createPSStroke(points) {
     var path = new PSStroke(points, {
       fill: null,
       stroke: this.color,
@@ -980,7 +846,7 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
       strokeDashArray: this.strokeDashArray,
     });
 
-    var position = new fabric.Point(
+    var position = new Point(
       path.left + path.width / 2,
       path.top + path.height / 2,
     );
@@ -995,13 +861,13 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     path.left = position.x;
     if (this.shadow) {
       this.shadow.affectStroke = true;
-      path.shadow = new fabric.Shadow(this.shadow);
+      path.shadow = new Shadow(this.shadow);
     }
 
     return path;
-  },
+  }
 
-  _finalizeAndAddPath: function () {
+  _finalizeAndAddPath() {
     var ctx = this.canvas.contextTop;
     ctx.closePath();
 
@@ -1046,14 +912,8 @@ const PSBrushImpl = createClass(fabric.BaseBrush, {
     this._resetShadow();
 
     this.canvas.fire("path:created", { path });
-  },
-});
+  }
+}
 
-const PSBrush = PSBrushImpl;
-
-fabric["PSBrush"] = PSBrush;
-
-console.log("psbush");
-
-export { PSBrush, PSPoint, PSStroke, PressureManager, Simplify, createFabricClass, getPressure, isPSPoint, isPSStroke };
+export { PSBrush, PSPoint, PSStroke, PressureManager, Simplify, getPressure, isPSPoint, isPSStroke };
 //# sourceMappingURL=index.mjs.map
