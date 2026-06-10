@@ -1,6 +1,6 @@
 {
   "name": "fabricjs-psbrush",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "A lightweight pressure-sensitive brush implementation for Fabric.js",
   "type": "module",
   "main": "dist/index.mjs",
